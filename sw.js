@@ -1,5 +1,5 @@
 /* Supply Chain Digital Twin — cache-first service worker */
-const CACHE = 'scdt-v1';
+const CACHE = 'scdt-v2';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (e) => {
