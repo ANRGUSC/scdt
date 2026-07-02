@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="28" fill="#0f172a"/>
+  <!-- factory -->
+  <path d="M28 132 V84 l24 16 V84 l24 16 V84 l24 16 V132 Z" fill="#38bdf8"/>
+  <rect x="28" y="120" width="96" height="12" fill="#0ea5e9"/>
+  <!-- boxes / retail -->
+  <rect x="134" y="96" width="30" height="30" rx="3" fill="#22c55e"/>
+  <rect x="134" y="60" width="30" height="30" rx="3" fill="#4ade80"/>
+  <rect x="138" y="70" width="22" height="4" fill="#166534"/>
+  <rect x="138" y="106" width="22" height="4" fill="#166534"/>
+  <!-- flow arrow -->
+  <path d="M120 111 h10 m-6 -5 l6 5 l-6 5" stroke="#f8fafc" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
