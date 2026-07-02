@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Supply Chain Digital Twin</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+/* ============================================================= *
+ *  Supply Chain Digital Twin — styles
+ *  Projector-friendly high-contrast light theme.
+ * ============================================================= */
+:root{
+  --green:#16a34a; --green-fill:#bbf7d0;
+  --yellow:#d97706; --yellow-fill:#fde68a;
+  --red:#dc2626;   --red-fill:#fecaca;
+  --orange:#ea580c; --orange-fill:#fed7aa;
+  --gray:#94a3b8;  --gray-fill:#e2e8f0;
+  --ink:#0f172a; --ink-soft:#334155; --line:#cbd5e1;
+  --bg:#f8fafc; --card:#ffffff; --accent:#0ea5e9; --accent-ink:#0369a1;
+  --shadow:0 1px 3px rgba(15,23,42,.12),0 1px 2px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px; color:var(--ink); background:var(--bg);
+  -webkit-text-size-adjust:100%;
+}
+button{font-family:inherit}
+.app{display:grid; grid-template-rows:auto auto 1fr; height:100vh; min-height:0}
+
+/* ---- Header ---- */
+header{
+  background:var(--ink); color:#fff; padding:10px 16px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+header h1{font-size:20px; margin:0; font-weight:700; letter-spacing:.2px; white-space:nowrap}
+header .day{font-size:20px; font-weight:700; background:#1e293b; padding:4px 12px; border-radius:8px; font-variant-numeric:tabular-nums}
+header .spacer{flex:1}
+.btn{
+  background:#1e293b; color:#fff; border:1px solid #334155; border-radius:8px;
+  padding:8px 14px; font-size:15px; font-weight:600; cursor:pointer; line-height:1;
+}
+.btn:hover{background:#334155}
+.btn:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.btn.primary{background:var(--accent); border-color:var(--accent)}
+.btn.primary:hover{background:#38bdf8}
+.btn[disabled]{opacity:.45; cursor:not-allowed}
+header select{
+  background:#1e293b; color:#fff; border:1px solid #334155; border-radius:8px;
+  padding:8px 10px; font-size:15px; font-weight:600;
+}
+header label.speed{display:flex; align-items:center; gap:6px; font-size:14px}
+
+/* ---- Scenario banner ---- */
+#banner{
+  display:none; background:#fef3c7; border-bottom:2px solid var(--yellow);
+  padding:8px 16px; align-items:flex-start; gap:12px; color:#78350f;
+}
+#banner.on{display:flex}
+#banner .b-main{flex:1}
+#banner .b-title{font-weight:700; font-size:16px}
+#banner .b-desc{font-size:14px; margin-top:2px}
+#banner details{margin-top:4px}
+#banner summary{cursor:pointer; font-weight:600; font-size:14px}
+#banner ul{margin:6px 0 0; padding-left:20px; font-size:14px}
+#banner .b-watch{font-style:italic; margin-top:4px; font-size:13px}
+
+/* ---- KPI strip ---- */
+.kpis{
+  display:grid; grid-template-columns:repeat(5,1fr); gap:10px;
+  padding:10px 16px; background:var(--card); border-bottom:1px solid var(--line);
+}
+.kpi{
+  background:var(--card); border:1px solid var(--line); border-radius:10px;
+  padding:8px 12px; display:flex; flex-direction:column; gap:2px; box-shadow:var(--shadow);
+  min-width:0;
+}
+.kpi .k-label{font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px}
+.kpi .k-row{display:flex; align-items:flex-end; justify-content:space-between; gap:6px}
+.kpi .k-val{font-size:30px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums}
+.kpi .k-val.small{font-size:24px}
+.kpi svg.spark{display:block}
+.kpi.good .k-val{color:var(--green)}
+.kpi.warn .k-val{color:var(--yellow)}
+.kpi.bad  .k-val{color:var(--red)}
+
+/* ---- Main layout ---- */
+.main{display:grid; grid-template-columns:1fr 372px; min-height:0; overflow:hidden}
+.diagram{position:relative; min-width:0; padding:8px 8px 4px; overflow:hidden; background:
+  radial-gradient(circle at 30% 20%, #ffffff, #eef2f7)}
+.diagram svg{width:100%; height:100%; display:block}
+.panel{
+  border-left:1px solid var(--line); background:var(--card); display:flex; flex-direction:column; min-height:0;
+}
+.tabs{display:flex; border-bottom:2px solid var(--line)}
+.tab{
+  flex:1; background:transparent; border:none; border-bottom:3px solid transparent;
+  padding:12px 6px; font-size:14px; font-weight:700; color:var(--ink-soft); cursor:pointer;
+}
+.tab[aria-selected="true"]{color:var(--accent-ink); border-bottom-color:var(--accent)}
+.tab:hover{background:#f1f5f9}
+.tabpanels{overflow-y:auto; padding:14px; flex:1; min-height:0}
+.tabpanel{display:none}
+.tabpanel.on{display:block}
+
+/* ---- Controls ---- */
+.ctl{margin-bottom:16px}
+.ctl .c-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+.ctl label.c-label{font-size:14px; font-weight:700}
+.ctl .c-val{font-size:14px; font-weight:700; color:var(--accent-ink); font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%; margin:8px 0 0; accent-color:var(--accent)}
+.ctl .c-note{font-size:12px; color:var(--ink-soft); margin-top:3px; min-height:0}
+.ctl .c-note.warn{color:var(--red); font-weight:600}
+.capbar{position:relative; height:6px; background:var(--gray-fill); border-radius:3px; margin-top:6px}
+.capbar .cap-eff{position:absolute; top:0; bottom:0; left:0; background:var(--green); border-radius:3px}
+.capbar .cap-mark{position:absolute; top:-3px; width:2px; height:12px; background:var(--red)}
+.group-title{font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.5px;
+  color:var(--ink-soft); margin:4px 0 10px; border-bottom:1px solid var(--line); padding-bottom:4px}
+.toggle{
+  display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0;
+  border-bottom:1px dashed var(--line);
+}
+.toggle .t-label{font-size:14px; font-weight:600}
+.switch{
+  border:1px solid var(--line); background:#f1f5f9; border-radius:20px; padding:5px 12px;
+  font-size:13px; font-weight:700; cursor:pointer; color:var(--ink-soft); min-width:96px; text-align:center;
+}
+.switch.on{background:var(--red); color:#fff; border-color:var(--red)}
+.switch.alt{background:var(--accent); color:#fff; border-color:var(--accent)}
+.radio-row{display:flex; flex-direction:column; gap:6px}
+.radio-row label{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; cursor:pointer}
+.buyrow{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0}
+.buyrow .b-count{font-size:13px; color:var(--ink-soft); font-weight:700}
+.flash{animation:flash 1s ease-in-out 0s 3; border-radius:8px}
+@keyframes flash{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{box-shadow:0 0 0 4px rgba(220,38,38,.55)}}
+
+/* ---- Metrics tab ---- */
+.metric{display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--line); font-size:14px}
+.metric .m-label{color:var(--ink-soft); font-weight:600}
+.metric .m-val{font-weight:800; font-variant-numeric:tabular-nums}
+.subhead{font-size:12px; font-weight:800; text-transform:uppercase; color:var(--ink-soft); margin:16px 0 4px}
+.eventlog{margin-top:6px; font-size:13px; max-height:160px; overflow-y:auto; border:1px solid var(--line); border-radius:8px}
+.eventlog .ev{padding:5px 8px; border-bottom:1px solid var(--line); display:flex; gap:8px}
+.eventlog .ev:last-child{border-bottom:none}
+.eventlog .ev .d{font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums}
+.ev.bad .t{color:var(--red); font-weight:600}
+.ev.warn .t{color:var(--yellow); font-weight:600}
+.ev.info .t{color:var(--ink-soft)}
+
+/* ---- Scenario cards ---- */
+.scn{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:12px; box-shadow:var(--shadow)}
+.scn.active{border-color:var(--yellow); background:#fffbeb}
+.scn .s-name{font-size:15px; font-weight:800}
+.scn .s-desc{font-size:13px; color:var(--ink-soft); margin:4px 0}
+.scn .s-watch{font-size:12px; font-style:italic; color:var(--ink-soft); margin-bottom:6px}
+.scn details{font-size:13px; margin-bottom:8px}
+.scn details ul{margin:4px 0 0; padding-left:18px}
+.scn .s-tag{display:inline-block; font-size:11px; font-weight:700; background:var(--gray-fill);
+  color:var(--ink-soft); border-radius:6px; padding:2px 6px; margin-bottom:6px}
+
+/* ---- SVG node/edge classes ---- */
+.edge{fill:none; stroke:var(--gray); stroke-width:2; stroke-linecap:round}
+.edge.flow{stroke:var(--green); stroke-dasharray:3 9}
+.edge.delay{stroke:var(--yellow)}
+.edge.reroute{stroke-dasharray:6 6}
+.edge.hidden{display:none}
+.pulse{fill:var(--accent)}
+.node-box{stroke-width:2.5; rx:10}
+.node--ok  .node-box{fill:#f0fdf4; stroke:var(--green)}
+.node--ok  .node-fill{fill:var(--green-fill)}
+.node--warn .node-box{fill:#fffbeb; stroke:var(--yellow)}
+.node--warn .node-fill{fill:var(--yellow-fill)}
+.node--bad .node-box{fill:#fef2f2; stroke:var(--red)}
+.node--bad .node-fill{fill:var(--red-fill)}
+.node--over .node-box{fill:#fff7ed; stroke:var(--orange)}
+.node--over .node-fill{fill:var(--orange-fill)}
+.node--out .node-box{fill:url(#hatch); stroke:var(--red); stroke-dasharray:5 4}
+.node--out .node-fill{fill:none}
+.node-name{font-size:14px; font-weight:800; fill:var(--ink)}
+.node-val{font-size:16px; font-weight:800; fill:var(--ink); font-variant-numeric:tabular-nums}
+.node-sub{font-size:11px; font-weight:600; fill:var(--ink-soft)}
+.node-badge{font-size:12px; font-weight:800}
+.node-badge.bad{fill:var(--red)} .node-badge.warn{fill:var(--yellow)} .node-badge.over{fill:var(--orange)}
+.edge-label{font-size:11px; font-weight:700; fill:var(--ink-soft); font-variant-numeric:tabular-nums}
+.node g, .node rect, .node text{cursor:default}
+
+/* ---- Tooltip ---- */
+#tooltip{
+  position:fixed; z-index:50; max-width:280px; background:var(--ink); color:#fff;
+  font-size:13px; line-height:1.35; padding:8px 10px; border-radius:8px; pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.3); opacity:0; transition:opacity .1s; display:none;
+}
+#tooltip.on{display:block; opacity:1}
+
+/* ---- Responsive ---- */
+@media (max-width:900px){
+  .main{grid-template-columns:1fr; grid-template-rows:minmax(280px,46vh) 1fr; overflow-y:auto}
+  .panel{border-left:none; border-top:1px solid var(--line)}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi:last-child{grid-column:span 2}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Supply Chain Twin</h1>
+    <span class="day" id="dayLabel" data-tip="tipDay">Day 0</span>
+    <button class="btn primary" id="playBtn" data-tip="tipPlay">⏸ Pause</button>
+    <button class="btn" id="stepBtn" data-tip="tipStep">⏭ Step</button>
+    <button class="btn" id="resetBtn" data-tip="tipReset">⟲ Reset</button>
+    <label class="speed">Speed
+      <select id="speedSel" data-tip="tipSpeed">
+        <option value="2000">0.5×</option>
+        <option value="1000" selected>1×</option>
+        <option value="500">2×</option>
+        <option value="250">4×</option>
+      </select>
+    </label>
+    <span class="spacer"></span>
+  </header>
+
+  <div id="banner">
+    <div class="b-main">
+      <div class="b-title" id="bTitle"></div>
+      <div class="b-desc" id="bDesc"></div>
+      <div class="b-watch" id="bWatch"></div>
+      <details><summary>Hints</summary><ul id="bHints"></ul></details>
+    </div>
+    <button class="btn" id="clearBannerBtn" data-tip="tipClear">✕ Clear shocks</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="main">
+    <div class="diagram">
+      <svg id="net" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet" aria-label="Supply chain network">
+        <defs>
+          <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="8" height="8" fill="#f1f5f9"/>
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#94a3b8" stroke-width="3"/>
+          </pattern>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--gray)"/>
+          </marker>
+        </defs>
+        <g id="edgeLayer"></g>
+        <g id="pulseLayer"></g>
+        <g id="nodeLayer"></g>
+        <g id="edgeLabelLayer"></g>
+      </svg>
+    </div>
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true"  data-tab="shocks">Shocks</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="responses">Responses</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="scenarios">Scenarios</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="metrics">Metrics</button>
+      </div>
+      <div class="tabpanels">
+        <div class="tabpanel on" id="panel-shocks"></div>
+        <div class="tabpanel" id="panel-responses"></div>
+        <div class="tabpanel" id="panel-scenarios"></div>
+        <div class="tabpanel" id="panel-metrics"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+"use strict";
+
+/* ================================================================= *
+ * 1. CONSTANTS — every number lives here (frozen).
+ * ================================================================= */
+const DEFAULTS = Object.freeze({
+  seed:12345,
+  baseDemand:10, factoryBase:60, setpoint:40, whBase:120, shelf:50,
+  fShipEvery:2, rShipEvery:1, splitToW1:0.5, overflowPolicy:'delay',
+  globalDemandMult:1.0, tickPeriodMs:1000,
+  whStartInv:60, storeStartOnHand:10, avgDemandStart:10,
+  purchaseStep:20, purchaseMax:80,
+});
+
+const COST = Object.freeze({
+  production:1.00,
+  holdFactory:0.05, holdWh:0.05, holdRetail:0.10,
+  holdPremium:0.20, demurrage:0.10,
+  transportF2W:0.20, transportHome:0.30, transportReroute:0.60, transportRedirect:0.20,
+  fixedF2W:10, fixedW2R:5,
+  stockout:3.00, waste:2.00, capacity:500,
+});
+
+// Node geometry — centers; boxes drawn centered on (x,y). viewBox 900x520.
+const NODES = {
+  F:  {x:96,  y:260, w:128, h:104, label:'Factory'},
+  W1: {x:404, y:150, w:142, h:80,  label:'Warehouse 1'},
+  W2: {x:404, y:372, w:142, h:80,  label:'Warehouse 2'},
+  R1: {x:770, y:62,  w:124, h:64,  label:'Retail 1'},
+  R2: {x:770, y:190, w:124, h:64,  label:'Retail 2'},
+  R3: {x:770, y:330, w:124, h:64,  label:'Retail 3'},
+  R4: {x:770, y:458, w:124, h:64,  label:'Retail 4'},
+};
+
+const EDGES = [
+  {id:'F>W1', from:'F', to:'W1', leg:'F2W'},
+  {id:'F>W2', from:'F', to:'W2', leg:'F2W'},
+  {id:'W1>R1', from:'W1', to:'R1', leg:'W2R', home:true},
+  {id:'W1>R2', from:'W1', to:'R2', leg:'W2R', home:true},
+  {id:'W2>R3', from:'W2', to:'R3', leg:'W2R', home:true},
+  {id:'W2>R4', from:'W2', to:'R4', leg:'W2R', home:true},
+  {id:'W2>R1', from:'W2', to:'R1', leg:'W2R', reroute:true},
+  {id:'W2>R2', from:'W2', to:'R2', leg:'W2R', reroute:true},
+  {id:'W1>R3', from:'W1', to:'R3', leg:'W2R', reroute:true},
+  {id:'W1>R4', from:'W1', to:'R4', leg:'W2R', reroute:true},
+  {id:'W1>W2', from:'W1', to:'W2', leg:'redir'},
+  {id:'W2>W1', from:'W2', to:'W1', leg:'redir'},
+];
+
+/* ================================================================= *
+ * 2. TOOLTIP COPY — single source.
+ * ================================================================= */
+const TIPS = {
+  tipDay:"Simulated day. One tick = one day.",
+  tipPlay:"Play / pause the simulation clock.",
+  tipStep:"Advance exactly one day, then pause. Great for walking through cause and effect.",
+  tipReset:"Restore the baseline: day 0, default sliders, deterministic seed. Reproduces the same run every time.",
+  tipSpeed:"Simulated days per real second.",
+  tipClear:"Remove all shocks (and any scenario response overrides) without touching inventories. Different from Reset.",
+  // KPIs
+  kService:"Rolling 20-day service level: units sold ÷ units demanded. 100% = no lost sales.",
+  kCost:"Average total cost per day over the last 7 days (production, holding, transport, penalties, waste).",
+  kInv:"Total units in the system right now: factory buffer + warehouses + shelves + goods in transit (~7 days of demand).",
+  kStock:"Number of times a store has entered a stockout since reset (counts the event, not each day).",
+  kWaste:"Cumulative units discarded (overflow under the Waste policy, or shelves over capacity).",
+  // Shocks
+  cGlobal:"Multiply demand at every store. 1.0 = normal (40/day total). >1 = spike, <1 = slump.",
+  cStoreDem:"Multiply this one store's demand.",
+  cFcap:"Factory capacity multiplier. A disruption caps how much can be produced regardless of the production slider.",
+  cWcap:"Warehouse capacity multiplier. Lowers how much this warehouse can hold/handle.",
+  cWout:"Take this warehouse fully offline: it cannot receive or ship. Goods pile up at its gate.",
+  cDelayF:"Extra transit days added to NEW factory→warehouse shipments (in-transit shipments are unaffected).",
+  cDelayR:"Extra transit days added to NEW warehouse→store shipments (in-transit shipments are unaffected).",
+  // Responses
+  cProd:"Target units/day to produce. The factory makes min(this, effective capacity).",
+  cFfreq:"Ship factory→warehouse every N days in one batch. Higher = fewer, larger batches (lower fixed cost, more lumpy).",
+  cRfreq:"Ship warehouse→store every N days. Higher N needs more safety stock or stores run dry between deliveries.",
+  cSplit:"Share of each factory batch sent to Warehouse 1 (rest goes to Warehouse 2).",
+  cStoreWh:"Which warehouse serves this store. Rerouting away from the home warehouse costs more and adds a day.",
+  cBuy:"Buy +20 permanent capacity for $500 (one-time). Max +80.",
+  cPolicy:"What a warehouse does when a delivery exceeds its capacity. Each choice trades cost against service.",
+  // nodes
+  nF:"Factory: produces finished goods into a buffer, then ships batches to the warehouses.",
+  nW1:"Warehouse 1 (home to Retail 1 & 2). Receives factory batches; ships to its stores.",
+  nW2:"Warehouse 2 (home to Retail 3 & 4). Receives factory batches; ships to its stores.",
+  nR1:"Retail 1. Serves daily customer demand from on-hand stock.",
+  nR2:"Retail 2.", nR3:"Retail 3.", nR4:"Retail 4.",
+};
+
+/* ================================================================= *
+ * 3. HELPERS
+ * ================================================================= */
+const whId    = i => 'W' + (i + 1);
+const storeId = i => 'R' + (i + 1);
+const whIndex = id => (id === 'W1' ? 0 : 1);
+const stIndex = id => (+id[1] - 1);
+const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
+const lerp = (a,b,t) => a + (b - a) * t;
+const round = x => Math.round(x);
+const sum = arr => arr.reduce((a,b)=>a+b,0);
+const lastN = (arr,n) => arr.slice(Math.max(0, arr.length - n));
+
+// Deterministic PRNG with a call counter (used by snapshot()).
+function mulberry32(seed){
+  let a = seed >>> 0;
+  const f = function(){
+    f.calls++;
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  f.calls = 0;
+  return f;
+}
+
+const whEffCap = w => w.outage ? 0 : (w.baseCapacity + w.purchasedCapacity) * w.capMult;
+
+/* ================================================================= *
+ * 4. INITIAL STATE  (incl. pipeline pre-seed, §1.4)
+ * ================================================================= */
+function makeInitialState(){
+  const st = {
+    day:0, rng:mulberry32(DEFAULTS.seed), running:true, tickPeriodMs:DEFAULTS.tickPeriodMs,
+    factory:{ baseCapacity:DEFAULTS.factoryBase, capMult:1, setpoint:DEFAULTS.setpoint, buffer:0, producedToday:0 },
+    warehouses:[0,1].map(()=>({
+      baseCapacity:DEFAULTS.whBase, purchasedCapacity:0, capMult:1, outage:false,
+      inv:DEFAULTS.whStartInv, overflowQueue:0, premiumInv:0, _flaggedOver:false,
+    })),
+    stores:[0,1,2,3].map(i=>({
+      baseDemand:DEFAULTS.baseDemand, demandMult:1,
+      onHand:DEFAULTS.storeStartOnHand, shelfCapacity:DEFAULTS.shelf,
+      assignedWh: i<2?0:1, homeWh: i<2?0:1,
+      avgDemand7:DEFAULTS.avgDemandStart, dHist:[10,10,10,10,10,10,10],
+      demandToday:0, fulfilledToday:0, unmetToday:0, state:'healthy',
+    })),
+    shocks:{ globalDemandMult:1, delayF2W:0, delayW2R:0 },
+    responses:{ fShipEvery:DEFAULTS.fShipEvery, rShipEvery:DEFAULTS.rShipEvery,
+                splitToW1:DEFAULTS.splitToW1, overflowPolicy:DEFAULTS.overflowPolicy },
+    shipments:[],
+    costs:{ production:0, holding:0, transport:0, reroute:0, capacityPurchase:0,
+            stockoutPenalty:0, waste:0, total:0 },
+    counters:{ stockoutEvents:0, overstockEvents:0, wastedUnits:0, unmetUnits:0, demandUnits:0, fulfilledUnits:0 },
+    history:{ serviceLevel:[], costPerDay:[], sysInventory:[], demand:[], fulfilled:[], whInv:[], delays:[], deliv:[], stockCum:[], wasteCum:[] },
+    edgeHist:{},
+    eventLog:[],
+    activeScenario:null,
+    _scenarioOverrides:[],
+  };
+  // pre-seeded pipelines so day 1 is already steady state
+  st.warehouses.forEach((w,i)=>{
+    st.shipments.push({from:'F', to:whId(i), units:40, daysRemaining:2, leadTotal:2, costPerUnit:COST.transportF2W, leg:'F2W'});
+  });
+  st.stores.forEach((r,i)=>{
+    st.shipments.push({from:whId(r.homeWh), to:storeId(i), units:10, daysRemaining:1, leadTotal:1, costPerUnit:COST.transportHome, leg:'W2R'});
+  });
+  return st;
+}
+
+let state = makeInitialState();
+
+/* ================================================================= *
+ * 5. SIMULATION CORE — tick() runs steps 1–9 in order (§1.3).
+ * ================================================================= */
+function addCost(st, bucket, amt){
+  if(amt <= 0) return;
+  st.costs[bucket] += amt;
+  st.costs.total += amt;
+  st._today.cost += amt;
+}
+function flow(st, from, to, u){
+  const k = from + '>' + to;
+  st._ef[k] = (st._ef[k] || 0) + u;
+}
+function pipelineFor(st, sid){
+  let t = 0;
+  for(const s of st.shipments) if(s.to === sid) t += s.units;
+  return t;
+}
+function pushShip(st, from, to, units, lead, costPerUnit, leg, bucket){
+  st.shipments.push({from, to, units, daysRemaining:lead, leadTotal:lead, costPerUnit, leg});
+  flow(st, from, to, units);
+  if(costPerUnit > 0) addCost(st, bucket, units * costPerUnit);
+}
+function recordDelivery(st, s){
+  const t = st._today;
+  t.deliv.u += s.units;  t.deliv.w += s.units * s.leadTotal;
+  if(s.leg === 'F2W'){ t.delivF.u += s.units; t.delivF.w += s.units * s.leadTotal; }
+  else if(s.leg === 'W2R'){ t.delivR.u += s.units; t.delivR.w += s.units * s.leadTotal; }
+}
+
+// Overflow policy applied when arriving units exceed a warehouse's capacity.
+function acceptAtWarehouse(st, i, units){
+  const wh = st.warehouses[i];
+  const effCap = whEffCap(wh);
+  let accept = 0;
+  if(!wh.outage){
+    accept = Math.min(units, Math.max(0, effCap - wh.inv - wh.premiumInv));
+    wh.inv += accept;
+  }
+  let excess = units - accept;
+  if(excess <= 1e-9) return;
+
+  const policy = st.responses.overflowPolicy;
+  if(policy === 'delay'){
+    wh.overflowQueue += excess;
+  } else if(policy === 'premium'){
+    wh.premiumInv += excess;
+  } else if(policy === 'redirect'){
+    const j = 1 - i, other = st.warehouses[j];
+    const room = other.outage ? 0 : Math.max(0, whEffCap(other) - other.inv - other.premiumInv);
+    const move = Math.min(excess, room);
+    if(move > 1e-9){
+      pushShip(st, whId(i), whId(j), move, 1, COST.transportRedirect, 'redir', 'transport');
+      excess -= move;
+    }
+    if(excess > 1e-9){ st.counters.wastedUnits += excess; st._today.waste += excess; addCost(st,'waste', excess*COST.waste); }
+  } else if(policy === 'waste'){
+    st.counters.wastedUnits += excess; st._today.waste += excess; addCost(st,'waste', excess*COST.waste);
+  }
+}
+
+function receiveAtWarehouses(st){
+  // Retry queued (Delay policy) units first, before new arrivals.
+  for(const wh of st.warehouses){
+    if(wh.overflowQueue > 1e-9 && !wh.outage){
+      const room = Math.max(0, whEffCap(wh) - wh.inv - wh.premiumInv);
+      const move = Math.min(room, wh.overflowQueue);
+      wh.inv += move; wh.overflowQueue -= move;
+    }
+  }
+  const rem = [];
+  for(const s of st.shipments){
+    if((s.to === 'W1' || s.to === 'W2') && s.daysRemaining <= 0){
+      acceptAtWarehouse(st, whIndex(s.to), s.units);
+      recordDelivery(st, s);
+    } else rem.push(s);
+  }
+  st.shipments = rem;
+}
+
+// Factory dispatch (§1.3 step 4). Hybrid replenishment:
+//   • PULL each warehouse toward a demand-scaled base-stock target (position =
+//     inv + in-transit). This mean-reverts warehouse inventory, so a noisy but
+//     balanced baseline stays put instead of random-walking to empty/overflow.
+//   • PUSH any surplus (buffer beyond what warehouses need) by the split
+//     fraction. Over-supply — demand drop (S2), overproduction (S7), or an
+//     unavailable warehouse (S4) — piles onto the warehouses, so overflow
+//     policies and gate pile-ups still engage exactly as the scenarios intend.
+const WH_COVER_DAYS = 5;   // base-stock target = 5 days of a warehouse's throughput
+function shipFactory(st){
+  const R = st.responses, S = st.shocks;
+  if(st.day % R.fShipEvery !== 0 || st.factory.buffer <= 1e-9) return;
+  const buffer = st.factory.buffer;
+
+  const thru = [0,0];                                   // throughput each WH must cover
+  st.stores.forEach(r => { thru[r.assignedWh] += r.avgDemand7; });
+  const inTransit = [0,0];
+  for(const s of st.shipments){
+    if(s.to === 'W1') inTransit[0] += s.units;
+    else if(s.to === 'W2') inTransit[1] += s.units;
+  }
+  const desired = [0,1].map(i => {
+    const wh = st.warehouses[i];
+    const target = WH_COVER_DAYS * thru[i];
+    return Math.max(0, target - wh.inv - wh.overflowQueue - wh.premiumInv - inTransit[i]);
+  });
+  const totalDesired = desired[0] + desired[1];
+
+  let ship;
+  if(buffer <= totalDesired){
+    ship = totalDesired > 1e-9
+      ? [0,1].map(i => buffer * desired[i] / totalDesired)   // supply-short: allocate by need
+      : [buffer * R.splitToW1, buffer * (1 - R.splitToW1)];
+  } else {
+    const surplus = buffer - totalDesired;                   // over-supply: push surplus by split
+    ship = [ desired[0] + surplus * R.splitToW1,
+             desired[1] + surplus * (1 - R.splitToW1) ];
+  }
+
+  const lead = 2 + S.delayF2W;
+  let dispatched = false;
+  for(let i=0;i<2;i++){
+    if(ship[i] > 1e-9){ pushShip(st,'F',whId(i),ship[i],lead,COST.transportF2W,'F2W','transport'); dispatched = true; }
+  }
+  st.factory.buffer = 0;
+  if(dispatched) addCost(st,'transport', COST.fixedF2W);
+}
+
+function placeRetailOrders(st){
+  const R = st.responses, S = st.shocks;
+  if(st.day % R.rShipEvery !== 0) return;
+  const orders = st.stores.map((r,idx)=>{
+    const S_up = 3 * Math.max(r.avgDemand7, 0.5);          // adaptive order-up-to
+    const pipeline = pipelineFor(st, storeId(idx));        // includes today's undelivered arrivals
+    const q = Math.max(0, S_up - r.onHand - pipeline);
+    return {idx, wh:r.assignedWh, home:r.assignedWh === r.homeWh, q};
+  });
+  for(let w=0; w<2; w++){
+    const wh = st.warehouses[w];
+    if(wh.outage) continue;                                // outage → ship nothing
+    const grp = orders.filter(o => o.wh === w && o.q > 1e-9);
+    const totalOrder = sum(grp.map(o=>o.q));
+    if(totalOrder <= 1e-9) continue;
+    const factor = totalOrder > wh.inv ? (wh.inv > 0 ? wh.inv / totalOrder : 0) : 1;  // proportional allocation
+    let shipped = false;
+    for(const o of grp){
+      const qty = o.q * factor;
+      if(qty <= 1e-9) continue;
+      const lead = (o.home ? 1 : 2) + S.delayW2R;
+      const perUnit = o.home ? COST.transportHome : COST.transportReroute;
+      const bucket  = o.home ? 'transport' : 'reroute';
+      pushShip(st, whId(w), storeId(o.idx), qty, lead, perUnit, 'W2R', bucket);
+      wh.inv -= qty;
+      shipped = true;
+    }
+    if(shipped) addCost(st,'transport', COST.fixedW2R);
+  }
+}
+
+function receiveAtRetail(st){
+  const rem = [];
+  for(const s of st.shipments){
+    if(s.to[0] === 'R' && s.daysRemaining <= 0){
+      const r = st.stores[stIndex(s.to)];
+      const accept = Math.min(s.units, Math.max(0, r.shelfCapacity - r.onHand));
+      r.onHand += accept;
+      const waste = s.units - accept;
+      if(waste > 1e-9){ st.counters.wastedUnits += waste; st._today.waste += waste; addCost(st,'waste', waste*COST.waste); }
+      recordDelivery(st, s);
+    } else rem.push(s);
+  }
+  st.shipments = rem;
+}
+
+function applyDemand(st){
+  for(const r of st.stores){
+    const noise = st.rng() * 0.30 - 0.15;                  // U(-0.15, +0.15)
+    const d = Math.max(0, r.baseDemand * r.demandMult * st.shocks.globalDemandMult * (1 + noise));
+    const fulfilled = Math.min(d, r.onHand);
+    r.onHand -= fulfilled;
+    const unmet = d - fulfilled;                           // lost sales, no backorders
+    r.demandToday = d; r.fulfilledToday = fulfilled; r.unmetToday = unmet;
+    st.counters.demandUnits += d; st.counters.fulfilledUnits += fulfilled; st.counters.unmetUnits += unmet;
+    st._today.demand += d; st._today.fulfilled += fulfilled; st._today.unmet += unmet;
+    if(unmet > 1e-9) addCost(st,'stockoutPenalty', unmet * COST.stockout);
+    r.dHist.push(d); if(r.dHist.length > 7) r.dHist.shift();
+    r.avgDemand7 = sum(r.dHist) / r.dHist.length;          // realized demand, incl. unmet
+  }
+}
+
+function accrueHolding(st){
+  addCost(st,'holding', st.factory.buffer * COST.holdFactory);
+  for(const wh of st.warehouses){
+    addCost(st,'holding', wh.inv * COST.holdWh);
+    addCost(st,'holding', wh.premiumInv * COST.holdPremium);
+    addCost(st,'holding', wh.overflowQueue * COST.demurrage);
+  }
+  for(const r of st.stores) addCost(st,'holding', r.onHand * COST.holdRetail);
+}
+
+function systemInventory(st){
+  let t = st.factory.buffer;
+  for(const w of st.warehouses) t += w.inv + w.premiumInv + w.overflowQueue;
+  for(const r of st.stores) t += r.onHand;
+  for(const s of st.shipments) t += s.units;
+  return t;
+}
+function serviceRolling(st, n=20){
+  const f = sum(lastN(st.history.fulfilled, n)), d = sum(lastN(st.history.demand, n));
+  return d > 1e-9 ? (f / d) * 100 : 100;
+}
+function costAvg(st, n=7){
+  const a = lastN(st.history.costPerDay, n);
+  return a.length ? sum(a) / a.length : 0;
+}
+function avgDelay(st, n=20){
+  const a = lastN(st.history.deliv, n);
+  const u = sum(a.map(x=>x.u)), w = sum(a.map(x=>x.w));
+  return u > 1e-9 ? w / u : 0;
+}
+function avgDelayLeg(st, leg, n=20){
+  const a = lastN(st.history.deliv, n);
+  const u = sum(a.map(x=>x[leg].u)), w = sum(a.map(x=>x[leg].w));
+  return u > 1e-9 ? w / u : 0;
+}
+
+function updateNodeStates(st){
+  st.stores.forEach((r,idx)=>{
+    const avg = Math.max(r.avgDemand7, 1);
+    const pos = r.onHand + pipelineFor(st, storeId(idx));  // inventory position
+    let s;
+    if(r.unmetToday > 1e-9 || r.onHand < 0.5) s = 'stockout';
+    else if(pos / avg < 1.5) s = 'low';
+    else if(r.onHand / avg > 5) s = 'overstock';
+    else s = 'healthy';
+    if(s === 'stockout' && r.state !== 'stockout'){ st.counters.stockoutEvents++; logEvent(st, storeId(idx)+' entered STOCKOUT', 'bad'); }
+    else if(s === 'overstock' && r.state !== 'overstock'){ st.counters.overstockEvents++; }
+    r.state = s;
+  });
+  st.warehouses.forEach((wh,i)=>{
+    const over = wh.overflowQueue + wh.premiumInv;
+    if(over > 1e-9 && !wh._flaggedOver){ wh._flaggedOver = true; logEvent(st, whId(i)+' over capacity ('+st.responses.overflowPolicy+')', 'warn'); }
+    if(over <= 1e-9) wh._flaggedOver = false;
+  });
+}
+
+function logEvent(st, text, severity){
+  st.eventLog.push({day:st.day, text, severity:severity||'info'});
+  if(st.eventLog.length > 50) st.eventLog.shift();
+}
+
+function pushHistory(st){
+  const h = st.history, cap = a => { if(a.length > 60) a.shift(); };
+  h.fulfilled.push(st._today.fulfilled); cap(h.fulfilled);
+  h.demand.push(st._today.demand); cap(h.demand);
+  h.serviceLevel.push(serviceRolling(st)); cap(h.serviceLevel);
+  h.costPerDay.push(st._today.cost); cap(h.costPerDay);
+  h.sysInventory.push(systemInventory(st)); cap(h.sysInventory);
+  h.whInv.push(st.warehouses.map(w=>w.inv)); cap(h.whInv);
+  h.deliv.push({u:st._today.deliv.u, w:st._today.deliv.w,
+                delivF:st._today.delivF, delivR:st._today.delivR}); cap(h.deliv);
+  h.delays.push(avgDelay(st)); cap(h.delays);
+  h.stockCum.push(st.counters.stockoutEvents); cap(h.stockCum);
+  h.wasteCum.push(st.counters.wastedUnits); cap(h.wasteCum);
+  // edge flow ring buffers (7-day avg for edge thickness)
+  for(const e of EDGES){
+    if(!st.edgeHist[e.id]) st.edgeHist[e.id] = [];
+    st.edgeHist[e.id].push(st._ef[e.id] || 0);
+    if(st.edgeHist[e.id].length > 7) st.edgeHist[e.id].shift();
+  }
+}
+
+function tick(st){
+  st.day += 1;
+  st._ef = {};
+  st._today = { cost:0, produced:0, unmet:0, demand:0, fulfilled:0, waste:0,
+                deliv:{u:0,w:0}, delivF:{u:0,w:0}, delivR:{u:0,w:0} };
+
+  // 1. AGE shipments (do not deliver yet)
+  for(const s of st.shipments) s.daysRemaining -= 1;
+
+  // 2. PRODUCE
+  const effCap = st.factory.baseCapacity * st.factory.capMult;
+  const produced = Math.max(0, Math.min(st.factory.setpoint, effCap));
+  st.factory.buffer += produced;
+  st.factory.producedToday = produced;
+  st._today.produced = produced;
+  addCost(st, 'production', produced * COST.production);
+
+  receiveAtWarehouses(st);   // 3. RECEIVE @ WH (+ overflow policy)
+  shipFactory(st);           // 4. SHIP F→WH
+  placeRetailOrders(st);     // 5. ORDER & SHIP WH→R
+  receiveAtRetail(st);       // 6. RECEIVE @ retail
+  applyDemand(st);           // 7. DEMAND
+  accrueHolding(st);         // 8. holding costs (penalties accrued in-step)
+  updateNodeStates(st);      // 9a. node states + transition events
+  pushHistory(st);           // 9b. ring buffers
+}
+
+/* ================================================================= *
+ * 6. SCENARIOS
+ * ================================================================= */
+const SCENARIOS = [
+  { id:1, name:"Demand spike (all stores)",
+    description:"Global demand jumps to 1.5× (60/day). The order-up-to level lags the 7-day average, so stores under-order.",
+    watch:"Stockouts appear in 2–4 days as the adaptive level catches up.",
+    hints:["Raise production toward 60 to match the new demand exactly.",
+           "You'll be 'running hot' with zero slack — service recovers as the 7-day average adapts."],
+    flash:['ctl-global'],
+    apply(st){ st.shocks.globalDemandMult = 1.5; } },
+
+  { id:2, name:"Demand drop → overstock",
+    description:"Global demand falls to 0.4× (16/day). Stores stop ordering while factory keeps producing.",
+    watch:"Warehouses gain ~20/day each and hit capacity around day 4–6; the overflow policy engages.",
+    hints:["Cut production to about 16 to match demand.",
+           "Compare the four overflow policies' costs while warehouses are full."],
+    flash:['ctl-global'],
+    apply(st){ st.shocks.globalDemandMult = 0.4; } },
+
+  { id:3, name:"Factory capacity cut",
+    description:"A disruption caps factory capacity at 0.3× (18/day vs 40 demand).",
+    watch:"Warehouses drain ~11/day each; allocation shortfalls by day 4–6, retail stockouts day 7–9.",
+    hints:["Not fully fixable — the slider is capped at 18.",
+           "Lesson: buffers only DELAY a supply shock, they can't erase it."],
+    flash:['ctl-fcap'],
+    apply(st){ st.factory.capMult = 0.3; } },
+
+  { id:4, name:"Warehouse 1 outage",
+    description:"W1 goes offline: it cannot receive or ship. Goods pile up at its gate.",
+    watch:"R1/R2 stock out in 2–3 days; R3/R4 stay healthy.",
+    hints:["Set the split fraction to send 100% to W2.",
+           "Reroute R1 and R2 to W2 (note the reroute cost and extra day).",
+           "Buy +20 capacity at W2 — it now serves all four stores."],
+    flash:['ctl-w1out'],
+    apply(st){ st.warehouses[0].outage = true; } },
+
+  { id:5, name:"Warehouse 1 capacity crunch",
+    description:"W1 capacity drops to 0.3× (36) — below its current stock, so it can't receive until it drains.",
+    watch:"40-unit factory batches overflow by ~4; R1/R2 flicker yellow/red.",
+    hints:["Reroute ONLY R2 to W2 and set the split around 30/70 — targeted rebalancing.",
+           "Contrast with the full failover needed for a complete outage."],
+    flash:['ctl-w1cap'],
+    apply(st){ st.warehouses[0].capMult = 0.3; } },
+
+  { id:6, name:"Delivery frequency too low",
+    description:"MISMANAGEMENT PRESET: WH→store shipping set to every 3 days. Protection-interval demand (4×10=40) exceeds the order-up-to level (30).",
+    watch:"Stockouts at the tail of each 3-day cycle, even though production is still 40.",
+    hints:["Restore frequency to 1 (or try 2 — marginal, noise still bites).",
+           "Note how the fixed dispatch cost dropped while service suffered — a safety-margin lesson."],
+    flash:['ctl-rfreq'],
+    apply(st){ st.responses.rShipEvery = 3; },
+    clears(st){ st.responses.rShipEvery = DEFAULTS.rShipEvery; } },
+
+  { id:7, name:"Overproduction → congestion & waste",
+    description:"MISMANAGEMENT PRESET: production forced to 60 while demand is 40. Warehouses gain +20/day each.",
+    watch:"Warehouses fill in ~3 days; the overflow queue (or waste) climbs.",
+    hints:["Lower production to 40 or below (briefly below, to drain).",
+           "Switch the overflow policy to Waste to compare the waste counter against demurrage."],
+    flash:['ctl-prod'],
+    apply(st){ st.factory.setpoint = 60; },
+    clears(st){ st.factory.setpoint = DEFAULTS.setpoint; } },
+];
+
+function applyScenario(sc){
+  sc.apply(state);
+  state.activeScenario = sc;
+  if(sc.clears) state._scenarioOverrides.push(sc);
+  logEvent(state, 'Scenario applied: ' + sc.name, 'warn');
+  syncControlsFromState();
+  renderBanner();
+  renderScenariosTab();
+  flashControls(sc.flash);
+}
+
+function clearShocks(){
+  const s = state;
+  s.shocks.globalDemandMult = DEFAULTS.globalDemandMult;
+  s.shocks.delayF2W = 0; s.shocks.delayW2R = 0;
+  s.factory.capMult = 1;
+  s.warehouses.forEach(w=>{ w.capMult = 1; w.outage = false; });
+  s.stores.forEach(r=>{ r.demandMult = 1; });
+  for(const sc of s._scenarioOverrides) if(sc.clears) sc.clears(s);
+  s._scenarioOverrides = [];
+  s.activeScenario = null;
+  logEvent(s, 'Shocks cleared', 'info');
+  syncControlsFromState();
+  renderBanner();
+  renderScenariosTab();
+}
+
+/* ================================================================= *
+ * 7. DEV / TEST HOOK
+ * ================================================================= */
+function doReset(){
+  state = makeInitialState();
+  clearPulses();
+  captureAnim(); captureAnim();
+  syncControlsFromState();
+  renderBanner();
+  renderScenariosTab();
+  renderAll();
+}
+function afterBatch(){ captureAnim(); renderAll(); }
+
+function snapshot(){
+  return JSON.stringify(state, (k,v)=>{
+    if(typeof v === 'function') return undefined;
+    if(k === 'rng') return {calls:v.calls};
+    if(k === 'activeScenario') return v ? v.id : null;
+    if(k === '_scenarioOverrides') return v.map(o=>o.id);
+    if(k === '_ef' || k === '_today') return undefined;
+    return v;
+  });
+}
+
+window.__sim = {
+  get state(){ return state; },
+  tick(){ tick(state); afterBatch(); },
+  runDays(n){ for(let i=0;i<n;i++) tick(state); afterBatch(); return state.day; },
+  reset(){ doReset(); },
+  applyScenario(id){ const sc = SCENARIOS.find(s=>s.id===id); if(sc) applyScenario(sc); },
+  clearShocks(){ clearShocks(); },
+  snapshot(){ return snapshot(); },
+  metrics(){ return {
+    day: state.day,
+    service: serviceRolling(state),
+    serviceCumulative: state.counters.demandUnits > 0 ? state.counters.fulfilledUnits/state.counters.demandUnits*100 : 100,
+    costPerDay: costAvg(state),
+    sysInventory: systemInventory(state),
+    avgDelay: avgDelay(state),
+    stockoutEvents: state.counters.stockoutEvents,
+    wastedUnits: state.counters.wastedUnits,
+    whUtil: state.warehouses.map(w=>{ const c=whEffCap(w); return c>0? w.inv/c : null; }),
+    producedToday: state.factory.producedToday,
+    storeStates: state.stores.map(r=>r.state),
+  }; },
+  set(obj){ Object.assign(state.responses, obj); syncControlsFromState(); },
+  SCENARIOS,
+};
+
+/* ================================================================= *
+ * 8. DOM HELPERS
+ * ================================================================= */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+function el(tag, attrs, kids){
+  const e = document.createElement(tag);
+  if(attrs) for(const k in attrs){
+    const v = attrs[k];
+    if(k === 'class') e.className = v;
+    else if(k === 'html') e.innerHTML = v;
+    else if(k === 'text') e.textContent = v;
+    else if(k === 'tip'){ if(v != null) e.setAttribute('data-tip', v); }
+    else if(k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if(v != null) e.setAttribute(k, v);
+  }
+  if(kids != null) for(const c of [].concat(kids)) if(c != null)
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  return e;
+}
+function svgEl(tag, attrs){
+  const e = document.createElementNS(SVGNS, tag);
+  if(attrs) for(const k in attrs){
+    if(k === 'text') e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  return e;
+}
+
+/* ================================================================= *
+ * 9. SVG NETWORK — build once, cache refs, then only mutate attrs.
+ * ================================================================= */
+const svgRefs = { nodes:{}, edges:{} };
+const NODE_PAD = 7;
+
+function edgePts(e){
+  const a = NODES[e.from], b = NODES[e.to];
+  if(e.leg === 'redir'){
+    const dir = b.y > a.y ? 1 : -1;
+    return { x1:a.x, y1:a.y + dir*a.h/2, x2:b.x, y2:b.y - dir*b.h/2 };
+  }
+  return { x1:a.x + a.w/2, y1:a.y, x2:b.x - b.w/2, y2:b.y };
+}
+
+function initSvg(){
+  const edgeLayer = $('edgeLayer'), nodeLayer = $('nodeLayer'), labelLayer = $('edgeLabelLayer');
+  // edges
+  for(const e of EDGES){
+    const p = edgePts(e);
+    const path = svgEl('path', { d:`M ${p.x1} ${p.y1} L ${p.x2} ${p.y2}`, class:'edge', 'marker-end':'url(#arrow)' });
+    edgeLayer.appendChild(path);
+    const label = svgEl('text', { x:(p.x1+p.x2)/2, y:(p.y1+p.y2)/2 - 4, class:'edge-label', 'text-anchor':'middle' });
+    labelLayer.appendChild(label);
+    let len = 0; try { len = path.getTotalLength(); } catch(_){}
+    svgRefs.edges[e.id] = { path, label, len, dash:0, def:e };
+  }
+  // nodes
+  for(const key of Object.keys(NODES)){
+    const n = NODES[key];
+    const bx = n.x - n.w/2, by = n.y - n.h/2;
+    const g = svgEl('g', { class:'node node--ok' });
+    g.setAttribute('data-tip', 'n' + key);
+    const box  = svgEl('rect', { x:bx, y:by, width:n.w, height:n.h, rx:10, class:'node-box' });
+    const fill = svgEl('rect', { x:bx+NODE_PAD, width:n.w-2*NODE_PAD, class:'node-fill', rx:4 });
+    const name = svgEl('text', { x:bx+9, y:by+18, class:'node-name', 'text-anchor':'start', text:n.label });
+    const val  = svgEl('text', { x:n.x, y:n.y+8, class:'node-val', 'text-anchor':'middle' });
+    const sub  = svgEl('text', { x:n.x, y:by+n.h-8, class:'node-sub', 'text-anchor':'middle' });
+    const badge= svgEl('text', { x:bx+n.w-8, y:by+32, class:'node-badge', 'text-anchor':'end' });
+    g.append(box, fill, name, val, sub, badge);
+    nodeLayer.appendChild(g);
+    svgRefs.nodes[key] = { g, box, fill, name, val, sub, badge, geo:{bx,by,w:n.w,h:n.h} };
+  }
+}
+
+/* ---- node state → CSS class + badge ---- */
+function whClass(w){
+  if(w.outage) return 'node--out';
+  const cap = whEffCap(w), util = cap>0 ? w.inv/cap : 0;
+  if(w.overflowQueue>1e-6 || w.premiumInv>1e-6 || util>0.90) return 'node--bad';
+  if(util>=0.70) return 'node--warn';
+  return 'node--ok';
+}
+function factoryClass(f){
+  const eff = f.baseCapacity*f.capMult;
+  if(f.capMult<=0.2) return 'node--bad';
+  if(eff < f.setpoint - 1e-6) return 'node--warn';
+  return 'node--ok';
+}
+const STORE_CLASS = { healthy:'node--ok', low:'node--warn', stockout:'node--bad', overstock:'node--over' };
+
+/* ================================================================= *
+ * 10. DISPLAY INTERPOLATION (§4)
+ * ================================================================= */
+let anim = { prev:null, curr:null };
+let pulses = [];
+function computeDisplay(){
+  const wh = state.warehouses.map(w=>{
+    const cap = whEffCap(w);
+    return { frac: cap>0 ? clamp(w.inv/cap,0,1) : (w.inv>0?1:0), inv:w.inv };
+  });
+  const store = state.stores.map(r=>({ frac: clamp(r.onHand/r.shelfCapacity,0,1), onHand:r.onHand }));
+  const factory = { frac: clamp(state.factory.buffer/120,0,1), buffer:state.factory.buffer };
+  const edgeRate = {};
+  for(const e of EDGES){ const h = state.edgeHist[e.id]||[]; edgeRate[e.id] = h.length ? sum(h)/h.length : 0; }
+  return { wh, store, factory, edgeRate };
+}
+function captureAnim(){
+  const d = computeDisplay();
+  anim.prev = anim.curr || d;
+  anim.curr = d;
+}
+function clearPulses(){
+  pulses = [];
+  const pl = $('pulseLayer'); if(pl) while(pl.firstChild) pl.removeChild(pl.firstChild);
+}
+function spawnPulses(){
+  if(pulses.length > 36) return;
+  for(const e of EDGES){ if((state._ef && state._ef[e.id]||0) > 2) pulses.push({ id:e.id, p:0 }); }
+}
+
+/* ================================================================= *
+ * 11. PER-FRAME RENDER (SVG only)
+ * ================================================================= */
+function render(alpha, dt){
+  if(!anim.curr) return;
+  const P = anim.prev, C = anim.curr;
+
+  // factory
+  (function(){
+    const r = svgRefs.nodes.F, f = state.factory;
+    const frac = lerp(P.factory.frac, C.factory.frac, alpha);
+    const buf = lerp(P.factory.buffer, C.factory.buffer, alpha);
+    setFill(r, frac);
+    r.g.setAttribute('class', 'node ' + factoryClass(f));
+    r.val.textContent = 'Buf ' + round(buf);
+    const eff = f.baseCapacity * f.capMult;
+    r.sub.textContent = 'Prod ' + round(f.producedToday) + ' / cap ' + round(eff);
+    r.badge.textContent = f.capMult<=0.2 ? 'DISRUPT' : (eff < f.setpoint-1e-6 ? 'CAPPED' : '');
+    r.badge.setAttribute('class','node-badge ' + (f.capMult<=0.2?'bad':'warn'));
+  })();
+
+  // warehouses
+  state.warehouses.forEach((w,i)=>{
+    const key = whId(i), r = svgRefs.nodes[key];
+    const frac = lerp(P.wh[i].frac, C.wh[i].frac, alpha);
+    const inv = lerp(P.wh[i].inv, C.wh[i].inv, alpha);
+    setFill(r, w.outage ? 0 : frac);
+    r.g.setAttribute('class', 'node ' + whClass(w));
+    r.val.textContent = round(inv);
+    const cap = whEffCap(w);
+    let sub = w.outage ? 'OFFLINE' : (round(inv) + '/' + round(cap) + ' · ' + Math.round(cap>0?inv/cap*100:0) + '%');
+    if(w.overflowQueue>0.5) sub += ' · Q' + round(w.overflowQueue);
+    if(w.premiumInv>0.5)   sub += ' · +' + round(w.premiumInv);
+    r.sub.textContent = sub;
+    r.badge.textContent = w.outage ? 'OUT' : ((w.overflowQueue>0.5||w.premiumInv>0.5) ? 'FULL' : '');
+    r.badge.setAttribute('class','node-badge bad');
+  });
+
+  // stores
+  state.stores.forEach((rr,i)=>{
+    const key = storeId(i), r = svgRefs.nodes[key];
+    const frac = lerp(P.store[i].frac, C.store[i].frac, alpha);
+    const oh = lerp(P.store[i].onHand, C.store[i].onHand, alpha);
+    setFill(r, frac);
+    r.g.setAttribute('class', 'node ' + (STORE_CLASS[rr.state]||'node--ok'));
+    r.val.textContent = round(oh);
+    r.sub.textContent = 'dmd ' + rr.demandToday.toFixed(0) + (rr.unmetToday>0.5 ? ' · lost ' + round(rr.unmetToday) : '');
+    const badge = rr.state==='stockout' ? ['OUT','bad'] : rr.state==='low' ? ['LOW','warn'] : rr.state==='overstock' ? ['▲','over'] : ['',''];
+    r.badge.textContent = badge[0]; r.badge.setAttribute('class','node-badge ' + badge[1]);
+  });
+
+  // edges
+  const activeReroute = new Set();
+  state.stores.forEach((r,i)=>{ if(r.assignedWh !== r.homeWh) activeReroute.add(whId(r.assignedWh)+'>'+storeId(i)); });
+  for(const e of EDGES){
+    const ref = svgRefs.edges[e.id];
+    const rate = lerp(P.edgeRate[e.id]||0, C.edgeRate[e.id]||0, alpha);
+    let show = true;
+    if(e.reroute) show = rate>0.05 || activeReroute.has(e.id);
+    else if(e.leg==='redir') show = rate>0.05;
+    ref.path.classList.toggle('hidden', !show);
+    if(ref.label) ref.label.classList.toggle('hidden', !(show && rate>=0.5));
+    if(!show) continue;
+    ref.path.setAttribute('stroke-width', (1.5 + 8.5*Math.min(rate/30,1)).toFixed(2));
+    const flowing = rate>0.05;
+    let cls = 'edge' + (e.reroute?' reroute':'');
+    if(flowing){
+      cls += ' flow';
+      if((e.leg==='F2W'&&state.shocks.delayF2W>0)||(e.leg==='W2R'&&state.shocks.delayW2R>0)) cls += ' delay';
+    }
+    ref.path.setAttribute('class', cls);
+    if(flowing){ ref.dash -= rate*0.02*dt; ref.path.setAttribute('stroke-dashoffset', ref.dash.toFixed(1)); }
+    if(ref.label && rate>=0.5) ref.label.textContent = round(rate);
+  }
+
+  renderPulses(dt);
+}
+function setFill(r, frac){
+  const g = r.geo, avail = g.h - 2*NODE_PAD, h = clamp(frac,0,1)*avail;
+  r.fill.setAttribute('y', (g.by + g.h - NODE_PAD - h).toFixed(1));
+  r.fill.setAttribute('height', h.toFixed(1));
+}
+function renderPulses(dt){
+  const pl = $('pulseLayer'); if(!pl) return;
+  while(pl.childNodes.length < pulses.length) pl.appendChild(svgEl('circle', { r:4.5, class:'pulse' }));
+  while(pl.childNodes.length > pulses.length) pl.removeChild(pl.lastChild);
+  for(let i=pulses.length-1; i>=0; i--){
+    const pu = pulses[i]; pu.p += dt/900;
+    const ref = svgRefs.edges[pu.id];
+    if(pu.p>=1 || !ref || !ref.len){ pulses.splice(i,1); continue; }
+    let pt; try { pt = ref.path.getPointAtLength(ref.len*pu.p); } catch(_){ continue; }
+    const c = pl.childNodes[i];
+    if(c){ c.setAttribute('cx', pt.x.toFixed(1)); c.setAttribute('cy', pt.y.toFixed(1)); }
+  }
+}
+
+/* ================================================================= *
+ * 12. KPI STRIP
+ * ================================================================= */
+const KPI_DEFS = [
+  { key:'service', label:'Service',   tip:'kService', fmt:v=>v.toFixed(0)+'%', val:s=>serviceRolling(s),   spark:s=>s.history.serviceLevel, cls:v=>v>=98?'good':v>=90?'warn':'bad' },
+  { key:'cost',    label:'Cost/day',  tip:'kCost',    fmt:v=>'$'+v.toFixed(0), val:s=>costAvg(s),          spark:s=>s.history.costPerDay,   cls:()=>'' },
+  { key:'inv',     label:'Sys inv',   tip:'kInv',     fmt:v=>v.toFixed(0),     val:s=>systemInventory(s),  spark:s=>s.history.sysInventory, cls:()=>'' },
+  { key:'stock',   label:'Stockouts', tip:'kStock',   fmt:v=>String(v),        val:s=>s.counters.stockoutEvents, spark:s=>s.history.stockCum, cls:v=>v>0?'bad':'good' },
+  { key:'waste',   label:'Waste',     tip:'kWaste',   fmt:v=>round(v),         val:s=>s.counters.wastedUnits,    spark:s=>s.history.wasteCum, cls:v=>v>0?'warn':'good' },
+];
+function buildKPIs(){
+  const host = $('kpis'); host.innerHTML = '';
+  for(const d of KPI_DEFS){
+    const valEl = el('span',{class:'k-val'});
+    const spark = svgEl('svg',{class:'spark', width:96, height:26, viewBox:'0 0 96 26', preserveAspectRatio:'none'});
+    const poly = svgEl('polyline',{fill:'none', stroke:'var(--accent)', 'stroke-width':1.5}); spark.appendChild(poly);
+    const card = el('div',{class:'kpi', tip:d.tip}, [ el('span',{class:'k-label', text:d.label}), el('div',{class:'k-row'}, [valEl, spark]) ]);
+    host.appendChild(card);
+    svgRefs['kpi_'+d.key] = { card, valEl, poly };
+  }
+}
+function sparkPoints(arr, w=96, h=26){
+  const a = lastN(arr, 60); if(a.length<2) return '';
+  const mn = Math.min(...a), mx = Math.max(...a), rng = mx-mn||1;
+  return a.map((v,i)=>{ const x=(i/(a.length-1))*w; const y=h-2-((v-mn)/rng)*(h-4); return x.toFixed(1)+','+y.toFixed(1); }).join(' ');
+}
+function renderKPIs(){
+  for(const d of KPI_DEFS){
+    const ref = svgRefs['kpi_'+d.key]; if(!ref) continue;
+    const v = d.val(state);
+    ref.valEl.textContent = d.fmt(v);
+    ref.card.className = 'kpi ' + d.cls(v);
+    ref.poly.setAttribute('points', sparkPoints(d.spark(state)));
+  }
+}
+
+/* ================================================================= *
+ * 13. AGGREGATE RENDER (on tick / input, not per frame)
+ * ================================================================= */
+function updateHeader(){
+  $('dayLabel').textContent = 'Day ' + state.day;
+  $('playBtn').textContent = state.running ? '⏸ Pause' : '▶ Play';
+}
+let booted = false;
+function renderAll(){
+  if(!booted) return;
+  updateHeader();
+  renderKPIs();
+  renderMetrics();
+  updateDerivedControls();
+}
+
+/* ================================================================= *
+ * 14. CONTROLS (Shocks + Responses tabs)
+ * ================================================================= */
+const flashMap = {};
+const controlUpdaters = [];
+let prodCapRefs = null, buyRefs = [], policyRadios = [];
+
+function onControlChange(){ updateDerivedControls(); renderKPIs(); }
+
+function makeSlider({id,label,tip,min,max,step,get,set,fmt}){
+  const valEl = el('span',{class:'c-val'});
+  const input = el('input',{type:'range',min,max,step,tip,
+    oninput:()=>{ set(parseFloat(input.value)); valEl.textContent = fmt?fmt(parseFloat(input.value)):input.value; onControlChange(); }});
+  const wrap = el('div',{class:'ctl'},[ el('div',{class:'c-head'},[ el('label',{class:'c-label',text:label}), valEl ]), input ]);
+  controlUpdaters.push(()=>{ const g=get(); input.value=g; valEl.textContent=fmt?fmt(g):g; });
+  flashMap[id]=wrap;
+  return wrap;
+}
+function makeToggle({id,label,tip,get,set,onText,offText}){
+  const btn = el('button',{class:'switch',tip, onclick:()=>{ set(!get()); onControlChange(); syncControlsFromState(); }});
+  const row = el('div',{class:'toggle'},[ el('span',{class:'t-label',text:label}), btn ]);
+  controlUpdaters.push(()=>{ const on=get(); btn.textContent = on?(onText||'ON'):(offText||'OFF'); btn.className='switch'+(on?' on':''); });
+  flashMap[id]=row;
+  return row;
+}
+function makeAssignToggle(i){
+  const r = ()=>state.stores[i];
+  const btn = el('button',{class:'switch', tip:'cStoreWh',
+    onclick:()=>{ const s=r(); s.assignedWh = s.assignedWh===s.homeWh ? (1-s.homeWh) : s.homeWh; onControlChange(); syncControlsFromState(); }});
+  const row = el('div',{class:'toggle'},[ el('span',{class:'t-label',text:'Retail '+(i+1)+' served by'}), btn ]);
+  controlUpdaters.push(()=>{ const s=r(); const alt=s.assignedWh!==s.homeWh; btn.textContent='Warehouse '+(s.assignedWh+1)+(alt?' (rerouted)':''); btn.className='switch'+(alt?' alt':''); });
+  flashMap['ctl-wh'+i]=row;
+  return row;
+}
+function makeBuyButton(i){
+  const count = el('span',{class:'b-count'});
+  const btn = el('button',{class:'btn', tip:'cBuy',
+    onclick:()=>{ const w=state.warehouses[i]; if(w.purchasedCapacity < DEFAULTS.purchaseMax){ w.purchasedCapacity += DEFAULTS.purchaseStep; addCost(state,'capacityPurchase',COST.capacity); logEvent(state,'Bought +'+DEFAULTS.purchaseStep+' capacity at '+whId(i),'info'); onControlChange(); } }});
+  const row = el('div',{class:'buyrow'},[ el('span',{class:'t-label',text:'Warehouse '+(i+1)}), count, btn ]);
+  buyRefs[i] = { count, btn };
+  flashMap['ctl-buy'+i]=row;
+  return row;
+}
+function makePolicy(){
+  const wrap = el('div',{class:'radio-row', tip:'cPolicy'});
+  const opts = [['delay','Delay (queue at gate, demurrage)'],['redirect','Redirect to other WH (+transport)'],['premium','Premium overflow storage (4× holding)'],['waste','Waste excess ($2/unit)']];
+  policyRadios = [];
+  for(const [v,t] of opts){
+    const radio = el('input',{type:'radio', name:'policy', value:v, onchange:()=>{ state.responses.overflowPolicy=v; onControlChange(); }});
+    policyRadios.push(radio);
+    wrap.appendChild(el('label',{},[ radio, t ]));
+  }
+  controlUpdaters.push(()=>{ for(const rb of policyRadios) rb.checked = (rb.value===state.responses.overflowPolicy); });
+  return el('div',{class:'ctl'},[ el('label',{class:'c-label',text:'Overflow policy'}), wrap ]);
+}
+function makeProduction(){
+  const valEl = el('span',{class:'c-val'});
+  const input = el('input',{type:'range',min:0,max:60,step:1, tip:'cProd',
+    oninput:()=>{ state.factory.setpoint=parseFloat(input.value); valEl.textContent=input.value+' /day'; onControlChange(); }});
+  const capEff = el('div',{class:'cap-eff'});
+  const bar = el('div',{class:'capbar'},[capEff]);
+  const note = el('div',{class:'c-note'});
+  const wrap = el('div',{class:'ctl'},[ el('div',{class:'c-head'},[ el('label',{class:'c-label',text:'Production rate'}), valEl ]), input, bar, note ]);
+  prodCapRefs = { input, valEl, capEff, note };
+  controlUpdaters.push(()=>{ input.value=state.factory.setpoint; valEl.textContent=state.factory.setpoint+' /day'; });
+  flashMap['ctl-prod']=wrap;
+  return wrap;
+}
+
+function buildControls(){
+  const shocks = $('panel-shocks'); shocks.innerHTML='';
+  shocks.append(
+    el('div',{class:'group-title',text:'Demand'}),
+    makeSlider({id:'ctl-global',label:'Global demand',tip:'cGlobal',min:0.2,max:3,step:0.1, get:()=>state.shocks.globalDemandMult, set:v=>state.shocks.globalDemandMult=v, fmt:v=>v.toFixed(1)+'×'}),
+  );
+  for(let i=0;i<4;i++) shocks.append(makeSlider({id:'ctl-dem'+i,label:'Retail '+(i+1)+' demand',tip:'cStoreDem',min:0,max:3,step:0.1, get:(j=>()=>state.stores[j].demandMult)(i), set:(j=>v=>state.stores[j].demandMult=v)(i), fmt:v=>v.toFixed(1)+'×'}));
+  shocks.append(
+    el('div',{class:'group-title',text:'Disruptions'}),
+    makeSlider({id:'ctl-fcap',label:'Factory capacity',tip:'cFcap',min:0,max:1,step:0.05, get:()=>state.factory.capMult, set:v=>state.factory.capMult=v, fmt:v=>Math.round(v*100)+'%'}),
+    makeSlider({id:'ctl-w1cap',label:'Warehouse 1 capacity',tip:'cWcap',min:0,max:1,step:0.05, get:()=>state.warehouses[0].capMult, set:v=>state.warehouses[0].capMult=v, fmt:v=>Math.round(v*100)+'%'}),
+    makeSlider({id:'ctl-w2cap',label:'Warehouse 2 capacity',tip:'cWcap',min:0,max:1,step:0.05, get:()=>state.warehouses[1].capMult, set:v=>state.warehouses[1].capMult=v, fmt:v=>Math.round(v*100)+'%'}),
+    makeToggle({id:'ctl-w1out',label:'Warehouse 1 outage',tip:'cWout',get:()=>state.warehouses[0].outage, set:v=>state.warehouses[0].outage=v, onText:'OFFLINE', offText:'online'}),
+    makeToggle({id:'ctl-w2out',label:'Warehouse 2 outage',tip:'cWout',get:()=>state.warehouses[1].outage, set:v=>state.warehouses[1].outage=v, onText:'OFFLINE', offText:'online'}),
+    el('div',{class:'group-title',text:'Delivery delays'}),
+    makeSlider({id:'ctl-delayF',label:'Delay Factory→WH',tip:'cDelayF',min:0,max:4,step:1, get:()=>state.shocks.delayF2W, set:v=>state.shocks.delayF2W=v, fmt:v=>'+'+v+' d'}),
+    makeSlider({id:'ctl-delayR',label:'Delay WH→Retail',tip:'cDelayR',min:0,max:4,step:1, get:()=>state.shocks.delayW2R, set:v=>state.shocks.delayW2R=v, fmt:v=>'+'+v+' d'}),
+    el('button',{class:'btn', tip:'tipClear', style:'width:100%;margin-top:8px', onclick:clearShocks}, '✕ Clear all shocks'),
+  );
+
+  const resp = $('panel-responses'); resp.innerHTML='';
+  resp.append(
+    el('div',{class:'group-title',text:'Production & dispatch'}),
+    makeProduction(),
+    makeSlider({id:'ctl-ffreq',label:'Ship Factory→WH every',tip:'cFfreq',min:1,max:4,step:1, get:()=>state.responses.fShipEvery, set:v=>state.responses.fShipEvery=v, fmt:v=>v+' day'+(v>1?'s':'')}),
+    makeSlider({id:'ctl-rfreq',label:'Ship WH→Retail every',tip:'cRfreq',min:1,max:3,step:1, get:()=>state.responses.rShipEvery, set:v=>state.responses.rShipEvery=v, fmt:v=>v+' day'+(v>1?'s':'')}),
+    makeSlider({id:'ctl-split',label:'Split to Warehouse 1',tip:'cSplit',min:0,max:100,step:5, get:()=>Math.round(state.responses.splitToW1*100), set:v=>state.responses.splitToW1=v/100, fmt:v=>v+'% W1 / '+(100-v)+'% W2'}),
+    el('div',{class:'group-title',text:'Routing'}),
+  );
+  for(let i=0;i<4;i++) resp.append(makeAssignToggle(i));
+  resp.append(el('div',{class:'group-title',text:'Capacity (one-time purchase)'}));
+  for(let i=0;i<2;i++) resp.append(makeBuyButton(i));
+  resp.append(el('div',{class:'group-title',text:'Overflow handling'}), makePolicy());
+}
+
+function syncControlsFromState(){ for(const u of controlUpdaters) u(); updateDerivedControls(); }
+function updateDerivedControls(){
+  if(prodCapRefs){
+    const eff = state.factory.baseCapacity * state.factory.capMult;
+    prodCapRefs.capEff.style.width = (eff/60*100).toFixed(0)+'%';
+    if(state.factory.setpoint > eff + 1e-6){
+      prodCapRefs.note.textContent = 'Limited by disruption — producing '+round(eff)+'/day.';
+      prodCapRefs.note.className = 'c-note warn';
+    } else { prodCapRefs.note.textContent = 'Effective capacity '+round(eff)+'/day.'; prodCapRefs.note.className='c-note'; }
+  }
+  for(let i=0;i<2;i++) if(buyRefs[i]){
+    const w = state.warehouses[i];
+    buyRefs[i].count.textContent = '+'+w.purchasedCapacity+' / max +'+DEFAULTS.purchaseMax;
+    const maxed = w.purchasedCapacity >= DEFAULTS.purchaseMax;
+    buyRefs[i].btn.disabled = maxed;
+    buyRefs[i].btn.textContent = maxed ? 'Max capacity' : 'Buy +20 ($500)';
+  }
+}
+function flashControls(ids){
+  if(!ids) return;
+  for(const id of ids){ const e = flashMap[id]; if(e){ e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); } }
+}
+
+/* ================================================================= *
+ * 15. METRICS TAB
+ * ================================================================= */
+let metricsRefs = null;
+function buildMetrics(){
+  const host = $('panel-metrics'); host.innerHTML=''; metricsRefs = {};
+  const row = (label,key,tip)=>{ const v=el('span',{class:'m-val'}); metricsRefs[key]=v; return el('div',{class:'metric', tip}, [ el('span',{class:'m-label',text:label}), v ]); };
+  host.append(
+    el('div',{class:'subhead',text:'Service'}),
+    row('Service level (20-day)','svc'), row('Service (cumulative)','svcCum'),
+    row('Avg delivery delay','delay'), row('  ↳ Factory→WH','delayF'), row('  ↳ WH→Retail','delayR'),
+    el('div',{class:'subhead',text:'Cost ($ cumulative)'}),
+    row('Cost / day (avg 7d)','costDay'),
+    row('Production','cProduction'), row('Holding','cHolding'), row('Transport','cTransport'),
+    row('Reroute','cReroute'), row('Capacity purchase','cCapacityPurchase'),
+    row('Stockout penalty','cStockoutPenalty'), row('Waste','cWaste'), row('Total','cTotal'),
+    el('div',{class:'subhead',text:'Flow counters (cumulative)'}),
+    row('Demand','demand'), row('Fulfilled','fulfilled'), row('Lost sales','unmet'),
+    row('Stockout events','stockEv'), row('Overstock events','overEv'), row('Wasted units','wasted'),
+    row('System inventory','sysinv'),
+    el('div',{class:'subhead',text:'Event log'}),
+    (metricsRefs.log = el('div',{class:'eventlog'})),
+  );
+}
+function renderMetrics(){
+  if(!metricsRefs) buildMetrics();
+  const r = metricsRefs, s = state, c = s.costs, k = s.counters;
+  r.svc.textContent = serviceRolling(s).toFixed(1)+'%';
+  r.svcCum.textContent = (k.demandUnits>0 ? k.fulfilledUnits/k.demandUnits*100 : 100).toFixed(1)+'%';
+  r.delay.textContent = avgDelay(s).toFixed(2)+' d';
+  r.delayF.textContent = avgDelayLeg(s,'delivF').toFixed(2)+' d';
+  r.delayR.textContent = avgDelayLeg(s,'delivR').toFixed(2)+' d';
+  r.costDay.textContent = '$'+costAvg(s).toFixed(2);
+  for(const b of ['production','holding','transport','reroute','capacityPurchase','stockoutPenalty','waste','total'])
+    r['c'+b[0].toUpperCase()+b.slice(1)].textContent = '$'+c[b].toFixed(0);
+  r.demand.textContent = k.demandUnits.toFixed(0);
+  r.fulfilled.textContent = k.fulfilledUnits.toFixed(0);
+  r.unmet.textContent = k.unmetUnits.toFixed(0);
+  r.stockEv.textContent = k.stockoutEvents;
+  r.overEv.textContent = k.overstockEvents;
+  r.wasted.textContent = k.wastedUnits.toFixed(0);
+  r.sysinv.textContent = systemInventory(s).toFixed(0);
+  // event log (most recent first)
+  r.log.innerHTML='';
+  for(const ev of s.eventLog.slice(-12).reverse())
+    r.log.appendChild(el('div',{class:'ev '+ev.severity},[ el('span',{class:'d',text:'D'+ev.day}), el('span',{class:'t',text:ev.text}) ]));
+}
+
+/* ================================================================= *
+ * 16. SCENARIOS TAB + BANNER
+ * ================================================================= */
+function renderScenariosTab(){
+  if(!booted) return;
+  const host = $('panel-scenarios'); host.innerHTML='';
+  host.append(el('div',{class:'c-note',style:'margin-bottom:10px',
+    text:'Triggering a scenario applies it on top of the running simulation (no reset). Watch the diagram, then use the Responses tab to mitigate.'}));
+  for(const sc of SCENARIOS){
+    const active = state.activeScenario && state.activeScenario.id===sc.id;
+    const card = el('div',{class:'scn'+(active?' active':'')});
+    if(sc.clears) card.append(el('span',{class:'s-tag',text:'MISMANAGEMENT PRESET'}));
+    card.append(
+      el('div',{class:'s-name',text:sc.id+'. '+sc.name}),
+      el('div',{class:'s-desc',text:sc.description}),
+      el('div',{class:'s-watch',text:'Watch: '+sc.watch}),
+      el('details',{},[ el('summary',{text:'Mitigation hints'}), el('ul',{}, sc.hints.map(h=>el('li',{text:h}))) ]),
+      el('button',{class:'btn primary', onclick:(x=>()=>applyScenario(x))(sc)}, active?'Re-apply':'Trigger scenario'),
+    );
+    host.appendChild(card);
+  }
+}
+function renderBanner(){
+  if(!booted) return;
+  const b = $('banner'), sc = state.activeScenario;
+  if(!sc){ b.classList.remove('on'); return; }
+  b.classList.add('on');
+  $('bTitle').textContent = sc.id+'. '+sc.name;
+  $('bDesc').textContent = sc.description;
+  $('bWatch').textContent = 'Watch: '+sc.watch;
+  const ul = $('bHints'); ul.innerHTML='';
+  for(const h of sc.hints) ul.appendChild(el('li',{text:h}));
+}
+
+/* ================================================================= *
+ * 17. TABS, TOOLTIPS, HEADER, LOOP
+ * ================================================================= */
+function setupTabs(){
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t=>t.addEventListener('click', ()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected', x===t ? 'true':'false'));
+    const name = t.getAttribute('data-tab');
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('on', p.id==='panel-'+name));
+  }));
+}
+
+function setupTooltip(){
+  const tt = $('tooltip');
+  const place = (x,y)=>{
+    const pad=14, r=tt.getBoundingClientRect();
+    let left=x+pad, top=y+pad;
+    if(left+r.width  > innerWidth-8)  left = x - r.width - pad;
+    if(top +r.height > innerHeight-8) top  = y - r.height - pad;
+    tt.style.left=Math.max(4,left)+'px'; tt.style.top=Math.max(4,top)+'px';
+  };
+  const show = (t,x,y)=>{ const key=t.getAttribute('data-tip'); if(!key) return; tt.textContent=TIPS[key]||key; tt.classList.add('on'); place(x,y); };
+  const hide = ()=>tt.classList.remove('on');
+  const near = e => e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+  document.addEventListener('mouseover', e=>{ const t=near(e); if(t) show(t,e.clientX,e.clientY); });
+  document.addEventListener('mousemove', e=>{ if(tt.classList.contains('on')) place(e.clientX,e.clientY); });
+  document.addEventListener('mouseout',  e=>{ if(near(e)) hide(); });
+  document.addEventListener('focusin',   e=>{ const t=near(e); if(t){ const r=t.getBoundingClientRect(); show(t,r.left,r.bottom); } });
+  document.addEventListener('focusout',  hide);
+  document.addEventListener('click', e=>{
+    if(!matchMedia('(hover:none)').matches) return;
+    const t=near(e); if(!t) return;
+    if(tt.classList.contains('on')) hide(); else { const r=t.getBoundingClientRect(); show(t,r.left,r.bottom); }
+  });
+}
+
+function setupHeader(){
+  $('playBtn').addEventListener('click', ()=>{ state.running=!state.running; updateHeader(); });
+  $('stepBtn').addEventListener('click', ()=>{ state.running=false; doTick(); });
+  $('resetBtn').addEventListener('click', ()=>{ doReset(); });
+  $('speedSel').addEventListener('change', e=>{ state.tickPeriodMs = +e.target.value; });
+  $('clearBannerBtn').addEventListener('click', clearShocks);
+}
+
+function doTick(){ tick(state); captureAnim(); spawnPulses(); renderAll(); }
+
+let lastFrame = 0, acc = 0;
+function frame(now){
+  if(!lastFrame) lastFrame = now;
+  let dt = now - lastFrame; lastFrame = now;
+  if(dt > 250) dt = 250;                                  // clamp after tab-switch stalls
+  if(state.running){
+    acc += dt; let guard = 0;
+    while(acc >= state.tickPeriodMs && guard < 20){ doTick(); acc -= state.tickPeriodMs; guard++; }
+    if(guard >= 20) acc = 0;
+  }
+  const alpha = state.running ? Math.min(acc / state.tickPeriodMs, 1) : 1;
+  render(alpha, dt);
+  requestAnimationFrame(frame);
+}
+
+/* ================================================================= *
+ * 18. BOOT + PWA
+ * ================================================================= */
+function boot(){
+  booted = true;
+  initSvg();
+  buildKPIs();
+  buildControls();
+  setupTabs();
+  setupTooltip();
+  setupHeader();
+  syncControlsFromState();
+  renderScenariosTab();
+  renderBanner();
+  captureAnim(); captureAnim();
+  renderAll();
+  requestAnimationFrame(frame);
+}
+
+// Boot only when the real app DOM is present (keeps the engine runnable headless).
+if(typeof document !== 'undefined' && document.getElementById){
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else if(document.getElementById('net')) boot();
+}
+
+// Service worker: only over https/localhost; silently no-ops on file://
+if(typeof navigator !== 'undefined' && 'serviceWorker' in navigator &&
+   (location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname))){
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
+// >>>APPEND<<<
+</script>
+</body>
+</html>
